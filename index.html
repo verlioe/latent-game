@@ -434,6 +434,7 @@ const ui = {
   earnedLine: $('earnedLine'), metaGrid: $('metaGrid'),
   charRow: $('charRow'), achList: $('achList'), achvLine: $('achvLine'), boardList: $('boardList'),
   pauseStats: $('pauseStats'), buildList: $('buildList'), codexList: $('codexList'),
+  bossWarn: $('bossWarn'),
 };
 
 let VW = 960, VH = 600, DPR = 1;
@@ -1069,6 +1070,8 @@ const G = {
   airTimer: 180,
   gear: [],
   gearSlots: [],
+  bossWarn: 0,
+  wave: 1,
   world: { w: 4400, h: 3400 },
   cam: { x: 0, y: 0 },
   camInit: false,
@@ -2802,7 +2805,17 @@ function update(dt) {
   if (G.bossAlive && !G.enemies.some(e => e.boss && !e.dead)) G.bossAlive = false;
   if (!G.bossAlive) {
     G.bossTimer -= dt;
-    if (G.bossTimer <= 0) { G.bossTimer = BOSS_INTERVAL; spawnBoss(); }
+    if (G.bossTimer <= 0 && !(G.bossWarn > 0)) G.bossWarn = 3;
+    if (G.bossWarn > 0) {
+      G.bossWarn -= dt;
+      if (G.bossWarn <= 0) {
+        G.bossWarn = 0;
+        G.bossTimer = BOSS_INTERVAL;
+        spawnBoss();
+        G.shake = Math.max(G.shake, 20);
+        SFX.bigKill();
+      }
+    }
   }
 
   /* --- 精英 / 包圍波 --- */
@@ -3725,7 +3738,7 @@ function endGame(won) {
     if (Object.keys(G.player.evolved).filter(k => G.player.evolved[k]).length === 0) miss.push('沒做出進化');
     if (!G.curseBonus) miss.push('沒踩祭壇');
     if (!G.arcana2) miss.push('沒拿到第二張 Arcana');
-    di.textContent = '等級 ' + G.player.level + '　·　還差 ' + need + ' 經驗升級　·　存活 ' + Math.floor(G.t / 60) + ' 分 ' + Math.floor(G.t % 60) + ' 秒　·　本局缺：' + (miss.length ? miss.join('、') : '沒有，幾乎全滿');
+    di.textContent = '第 ' + (G.wave || 1) + ' 波　·　等級 ' + G.player.level + '　·　還差 ' + need + ' 經驗升級　·　存活 ' + Math.floor(G.t / 60) + ' 分 ' + Math.floor(G.t % 60) + ' 秒　·　本局缺：' + (miss.length ? miss.join('、') : '沒有，幾乎全滿');
   }
   if (ui.achvLine) {
     ui.achvLine.textContent = unlocked.length
