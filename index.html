@@ -1058,7 +1058,7 @@ const G = {
   levelKind: 'level',
   dmgDealt: 0,
   won: false,
-  settings: { dmgNums: true, shake: true, music: true, stage: 0,
+  settings: { dmgNums: true, shake: true, music: true, manualAim: false, stage: 0,
     modes: { hurry: false, inverse: false, endless: false, limit: false } },
   combo: 0,
   comboTimer: 0,
@@ -1067,6 +1067,8 @@ const G = {
   bossKills: 0,
   chips: 0,
   airTimer: 180,
+  gear: [],
+  equip: null,
   world: { w: 4400, h: 3400 },
   cam: { x: 0, y: 0 },
   camInit: false,
@@ -1282,6 +1284,7 @@ window.addEventListener('pointerdown', (e) => {
 }, { passive: false });
 
 window.addEventListener('pointermove', (e) => {
+  G.mouse = { x: e.clientX, y: e.clientY };
   if (!TOUCH.engaged || e.pointerId !== TOUCH.id) return;
   let dx = e.clientX - TOUCH.ox, dy = e.clientY - TOUCH.oy;
   const l = Math.hypot(dx, dy);
@@ -1639,6 +1642,18 @@ function gamepadMove() {
   return null;
 }
 
+function gamepadAim() {
+  if (!navigator.getGamepads) return null;
+  const pads = navigator.getGamepads();
+  for (let i = 0; i < pads.length; i++) {
+    const gp = pads[i];
+    if (!gp) continue;
+    const x = gp.axes[2] || 0, y = gp.axes[3] || 0;
+    if (Math.hypot(x, y) > 0.3) return { x, y };
+  }
+  return null;
+}
+
 function moveInput() {
   if (TOUCH.engaged) {
     const l = Math.hypot(TOUCH.x, TOUCH.y);
@@ -1693,8 +1708,14 @@ function nearestEnemy(x, y, maxD) {
 
 function fire() {
   const p = G.player;
-  const target = nearestEnemy(p.x, p.y, 1400);
-  if (target) p.aim = Math.atan2(target.y - p.y, target.x - p.x);
+  if (G.settings.manualAim) {
+    const pa = gamepadAim();
+    if (pa) p.aim = Math.atan2(pa.y, pa.x);
+    else if (G.mouse) p.aim = Math.atan2(G.mouse.y + G.cam.y - p.y, G.mouse.x + G.cam.x - p.x);
+  } else {
+    const target = nearestEnemy(p.x, p.y, 1400);
+    if (target) p.aim = Math.atan2(target.y - p.y, target.x - p.x);
+  }
 
   const base = p.dmgBase * p.dmgMult;
   const n = p.shots;
@@ -2046,6 +2067,20 @@ function killEnemy(e) {
   }
   G.shards.push({ x: e.x, y: e.y, vx: rnd(-40, 40), vy: rnd(-40, 40), val: e.xp, life: 20, r: 4, age: 0 });
 
+  if (e.elite || e.boss) {
+    const pool = [
+      { stat: 'dmg',   name: '火力核心', v: [0.12, 0.30], color: '#ff9f43' },
+      { stat: 'rate',  name: '超頻線圈', v: [0.10, 0.25], color: '#7dffd6' },
+      { stat: 'speed', name: '推進模組', v: [0.08, 0.20], color: '#9fe8ff' },
+      { stat: 'crit',  name: '瞄準晶片', v: [0.06, 0.15], color: '#ffd36e' },
+    ];
+    const g = pick(pool);
+    G.gear.push({
+      x: e.x, y: e.y, r: 12, life: 30, age: 0,
+      stat: g.stat, name: g.name, color: g.color,
+      value: rnd(g.v[0], g.v[1]) * (e.boss ? 1.6 : 1),
+    });
+  }
   // 爆炸怪：死亡時炸傷附近（含玩家）
   if (e.type === 'boomer') {
     G.rings.push({ x: e.x, y: e.y, r: 18, maxR: 120, life: 0.35, max: 0.35, color: '#ff7a3d' });
@@ -2891,6 +2926,34 @@ function update(dt) {
     SFX.levelup();
   }
 
+  /* --- 裝備拾取：分數較高就替換 --- */
+  for (let i = G.gear.length - 1; i >= 0; i--) {
+    const g = G.gear[i];
+    g.age += dt; g.life -= dt;
+    const gdx = p.x - g.x, gdy = p.y - g.y;
+    if (gdx * gdx + gdy * gdy < (p.r + g.r + 14) ** 2) {
+      const cur = G.equip ? G.equip.value : 0;
+      if (g.value > cur) {
+        if (G.equip) {
+          const o = G.equip;
+          if (o.stat === 'dmg') p.dmgMult -= o.value;
+          else if (o.stat === 'rate') p.fireRate /= (1 + o.value);
+          else if (o.stat === 'speed') p.speedMult -= o.value;
+          else if (o.stat === 'crit') p.crit -= o.value;
+        }
+        G.equip = g;
+        if (g.stat === 'dmg') p.dmgMult += g.value;
+        else if (g.stat === 'rate') p.fireRate *= (1 + g.value);
+        else if (g.stat === 'speed') p.speedMult += g.value;
+        else if (g.stat === 'crit') p.crit += g.value;
+        G.nums.push({ x: p.x, y: p.y - 58, vx: 0, vy: -14, life: 2.2, text: '裝備：' + g.name + ' +' + Math.round(g.value * 100) + '%', color: g.color, size: 15 });
+      }
+      G.gear.splice(i, 1);
+      continue;
+    }
+    if (g.life <= 0) G.gear.splice(i, 1);
+  }
+
   /* --- 陷阱 --- */
   for (const tr of G.traps) {
     if (tr.cd > 0) tr.cd -= dt;
@@ -3117,6 +3180,23 @@ function draw() {
     ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.r, 0, TAU); ctx.fill();
     ctx.fillStyle = ready ? 'rgba(255,200,120,0.9)' : 'rgba(120,140,160,0.25)';
     ctx.beginPath(); ctx.arc(tr.x, tr.y, 5, 0, TAU); ctx.fill();
+  }
+
+  // 裝備
+  for (const g of G.gear) {
+    if (!inView(g.x, g.y, 60)) continue;
+    const pu = 0.6 + Math.sin(G.t * 4 + g.x) * 0.4;
+    drawGlow(g.x, g.y, 30, g.color, 0.35 + pu * 0.3);
+    ctx.save();
+    ctx.translate(g.x, g.y);
+    ctx.rotate(G.t * 1.4);
+    ctx.strokeStyle = g.color;
+    ctx.lineWidth = 2;
+    polyPath(0, 0, 11, 4, 0);
+    ctx.stroke();
+    ctx.fillStyle = hexA(g.color, 0.35);
+    ctx.fill();
+    ctx.restore();
   }
 
   // 碎片
