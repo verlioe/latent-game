@@ -1955,13 +1955,15 @@ function pickType() {
   if (t > 40) w.push(['turret', 30]);
   if (t > 25) w.push(['runner', 26]);
   if (t > 85) w.push(['splitter', 20]);
-  if (t >= 120 && t < 240) { w.length = 0; w.push(['splitter', 62], ['noise', 38]); }
-  else if (t >= 240 && t < 360) { w.length = 0; w.push(['runner', 70], ['bug', 30]); }
-  else if (t >= 360) { w.length = 0; w.push(['splitter', 30], ['runner', 30], ['charger', 20], ['tank', 20]); }
+
   if (t > 35) w.push(['boomer', 26]);
   if (t > 45) w.push(['charger', 24]);
   if (t > 70) w.push(['wall', 8]);
   if (t > 55) w.push(['tank', 22 + Math.min(30, t / 8)]);
+  // 段落式組成：每 2 分鐘換一組，覆寫前面的權重
+  if (t >= 120 && t < 240) { w.length = 0; w.push(['splitter', 62], ['noise', 38]); }
+  else if (t >= 240 && t < 360) { w.length = 0; w.push(['runner', 70], ['bug', 30]); }
+  else if (t >= 360) { w.length = 0; w.push(['splitter', 30], ['runner', 30], ['charger', 20], ['tank', 20]); }
   let total = 0;
   for (const p of w) total += p[1];
   let r = Math.random() * total;
