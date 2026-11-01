@@ -1992,6 +1992,8 @@ function applyGear(g, sign) {
   else if (g.stat === 'crit') p.crit += g.value * sign;
   else if (g.kind === 'killboom') p.killBoom = sign > 0;
   else if (g.kind === 'lifesteal') p.lifesteal = sign > 0;
+  else if (g.kind === 'bounce') p.pierce += sign > 0 ? 1 : -1;
+  else if (g.kind === 'shield') p.dmgTaken = (p.dmgTaken || 1) * (sign > 0 ? 0.8 : 1.25);
 }
 
 function spawnElite() {
@@ -2097,9 +2099,14 @@ function killEnemy(e) {
     ];
     const g = pick(pool);
     if (e.boss && Math.random() < 0.3) {
-      const lg = Math.random() < 0.5
-        ? { stat: 'legend', kind: 'killboom', name: '★ 裂變核心', color: '#ff5fa8' }
-        : { stat: 'legend', kind: 'lifesteal', name: '★ 嗜血協議', color: '#ff5fa8' };
+      const LGP = [
+        { kind: 'killboom',  name: '★ 裂變核心' },
+        { kind: 'lifesteal', name: '★ 嗜血協議' },
+        { kind: 'bounce',    name: '★ 彈跳彈' },
+        { kind: 'shield',    name: '★ 相位護盾' },
+      ];
+      const lg = LGP[Math.floor(Math.random() * LGP.length)];
+      lg.stat = 'legend'; lg.color = '#ff5fa8';
       G.gear.push({
         x: e.x + 28, y: e.y, r: 14, life: 45, age: 0, value: 0.25,
         stat: lg.stat, kind: lg.kind, name: lg.name, color: lg.color,
@@ -3784,7 +3791,7 @@ function recordBoard(stats) {
   const top = board.slice(0, 5);
   try { localStorage.setItem('latent.board', JSON.stringify(top)); } catch (e) {}
   if (!ui.boardList) return;
-  ui.boardList.innerHTML = '前 5 名<br>' + top.map((r, i) =>
+  ui.boardList.innerHTML = '最高波數：' + (localStorage.getItem('latent.bestWave') || 1) + '<br>' + '前 5 名<br>' + top.map((r, i) =>
     `<div class="row2"><span>${i + 1}</span><span><b>${r.score}</b> 分</span><span>${Math.floor(r.t / 60)}:${String(r.t % 60).padStart(2, '0')}</span><span>LV${r.level}</span></div>`
   ).join('');
 }
