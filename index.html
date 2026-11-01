@@ -1177,7 +1177,7 @@ function reset() {
   G.airTimer = 180;
   G.altarTimer = 240;
   G.altars = [];
-  G.eventTimer = 180;
+  G.eventTimer = 90;
   G.ally = { x: G.player.x + 40, y: G.player.y, cd: 1 };
 
   // 世界內容
@@ -1918,7 +1918,7 @@ function updateCamera(dt) {
    ============================================================ */
 function spawnEnemy(type, x, y) {
   const cfg = ENEMY[type];
-  const scale = 1 + G.t / 62;
+  const scale = 1 + G.t / 48;
   const hp = cfg.hp * scale * ((G.player && G.player.enemyHp) || 1);
   const e = {
     id: ++G.eid, type, x, y, r: cfg.r,
@@ -1967,7 +1967,7 @@ function pickType() {
 }
 
 /* 最終頭目：14 分鐘出現，擊敗即通關 */
-const FINAL_AT = 840;
+const FINAL_AT = 540;
 
 function spawnFinalBoss() {
   const a = Math.random() * TAU;
@@ -2202,7 +2202,7 @@ function killEnemy(e) {
 /* ============================================================
    9.5 寶箱 / 道具 / 首領
    ============================================================ */
-const BOSS_INTERVAL = 120;
+const BOSS_INTERVAL = 95;
 const BOSS_NAME = '雜訊聚合體';
 
 function spawnCrate(x, y) {
@@ -2980,7 +2980,7 @@ function update(dt) {
   // 每 3 分鐘一個事件
   G.eventTimer -= dt;
   if (G.eventTimer <= 0) {
-    G.eventTimer = 180;
+    G.eventTimer = 90;
     const sched = ['rain', 'elite', 'swarm', 'elite'];
     const ev = sched[(G.eventIndex || 0) % sched.length];
     G.eventIndex = ((G.eventIndex || 0) + 1) % sched.length;
