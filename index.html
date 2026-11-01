@@ -2081,6 +2081,13 @@ function killEnemy(e) {
   G.kills++;
   if (G.player.killBoom) explode(e.x, e.y, 110, 35, '#ffd36e');
   if (G.player.lifesteal) G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.015);
+  // 擊飛：把附近敵人推開
+  for (const o of G.enemies) {
+    if (o === e || o.dead) continue;
+    const kx = o.x - e.x, ky = o.y - e.y, kd = Math.hypot(kx, ky) || 1;
+    if (kd < 96) { o.x += (kx / kd) * 16; o.y += (ky / kd) * 16; }
+  }
+  G.rings.push({ x: e.x, y: e.y, r: 4, maxR: 26, life: 0.24, max: 0.24, color: '#ffffff' });
   G.combo++;
   G.chips = (G.chips || 0) + (e.boss ? 20 : (e.elite ? 5 : 1));
   G.comboTimer = 2.5;
