@@ -1210,6 +1210,7 @@ window.addEventListener('keydown', (e) => {
   keys[k] = true;
 
   if (k === 'f2') G.debug = !G.debug;
+  if (k === 'b' && G.mode === 'play') openShop();
   // 密技：在標題畫面打 latent
   if (G.mode === 'title' && k.length === 1 && /[a-z]/.test(k)) {
     G.secretBuf = ((G.secretBuf || '') + k).slice(-6);
@@ -1442,14 +1443,15 @@ const AIR = [
   { id: 'up',    name: '免費升級', icon: '★', desc: '獲得 1 個隨機升級', cost: 3 }
 ];
 
-function openAirDrop() {
+function openAirDrop(isShop) {
   G.mode = 'levelup';
   G.levelKind = 'air';
   var pool = AIR.slice(), choices = [];
   while (choices.length < 3 && pool.length) {
     choices.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
   }
-  ui.levelLead.textContent = '補給空投　·　資料碎片 ' + (G.chips || 0);
+  if (isShop) choices.push({ id: 'leave', name: '離開', icon: '↩', desc: '不買，回到遊戲', cost: 0 });
+  ui.levelLead.textContent = (isShop ? '局內商店' : '補給空投') + '　·　資料碎片 ' + (G.chips || 0);
   cardRow.innerHTML = choices.map(function (u, i) {
     var cls = (G.chips || 0) >= u.cost ? 'card' : 'card maxed';
     return '<div class="' + cls + '" data-i="' + i + '">' +
@@ -1464,6 +1466,8 @@ function openAirDrop() {
   showScreen('level');
   SFX.levelup();
 }
+function openShop() { openAirDrop(true); }
+
 function slotCounts() {
   let w = 0, pa = 0;
   for (const id in G.stacks) {
@@ -3590,7 +3594,7 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.fillText(G.touchMode
       ? '拖曳畫面移動 · 自動射擊 · 右下圓鈕衝刺'
-      : 'WASD 移動 · 自動射擊 · Space 衝刺　|　擊殺敵人 → 撿碎片 → 升級選強化',
+      : 'WASD 移動 · 自動射擊 · Space 衝刺 · B 商店　|　擊殺 → 撿碎片 → 升級',
       VW / 2, VH - (G.touchMode ? 128 : 44));
     ctx.globalAlpha = 1;
   }
