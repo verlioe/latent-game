@@ -1065,6 +1065,8 @@ const G = {
   comboBest: 0,
   slow: 0,
   bossKills: 0,
+  chips: 0,
+  airTimer: 180,
   world: { w: 4400, h: 3400 },
   cam: { x: 0, y: 0 },
   camInit: false,
@@ -1158,6 +1160,8 @@ function reset() {
   G.combo = 0; G.comboTimer = 0; G.comboBest = 0; G.slow = 0;
   G.bossKills = 0;
   G.curseBonus = 0;
+  G.chips = 0;
+  G.airTimer = 180;
   G.altarTimer = 240;
   G.altars = [];
   G.eventTimer = 180;
@@ -1428,6 +1432,35 @@ function checkLevelUp() {
   if (G.pendingLevels > 0 && G.mode === 'play') openLevelUp();
 }
 
+const AIR = [
+  { id: 'heal',  name: '緊急修復', icon: '✚', desc: '回復 30% 生命', cost: 0 },
+  { id: 'wslot', name: '擴充槽位', icon: '◍', desc: '本局武器欄位 +1', cost: 5 },
+  { id: 'pslot', name: '被動槽位', icon: '◇', desc: '本局被動欄位 +1', cost: 5 },
+  { id: 'up',    name: '免費升級', icon: '★', desc: '獲得 1 個隨機升級', cost: 3 }
+];
+
+function openAirDrop() {
+  G.mode = 'levelup';
+  G.levelKind = 'air';
+  var pool = AIR.slice(), choices = [];
+  while (choices.length < 3 && pool.length) {
+    choices.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  ui.levelLead.textContent = '補給空投　·　資料碎片 ' + (G.chips || 0);
+  cardRow.innerHTML = choices.map(function (u, i) {
+    var cls = (G.chips || 0) >= u.cost ? 'card' : 'card maxed';
+    return '<div class="' + cls + '" data-i="' + i + '">' +
+      '<span class="k">' + (i + 1) + '</span>' +
+      '<div class="ico">' + u.icon + '</div>' +
+      '<h3>' + u.name + '</h3>' +
+      '<p>' + u.desc + '</p>' +
+      '<small>' + (u.cost ? u.cost + ' 碎片' : '免費') + '</small>' +
+      '</div>';
+  }).join('');
+  cardRow.__choices = choices;
+  showScreen('level');
+  SFX.levelup();
+}
 function slotCounts() {
   let w = 0, pa = 0;
   for (const id in G.stacks) {
@@ -1462,7 +1495,7 @@ function buildPool() {
     if (lv >= u.max) continue;
     if (lv === 0) {
       if (u.kind === 'weapon' && s.w >= weaponCap()) continue;
-      if (u.kind === 'passive' && s.pa >= PASSIVE_SLOTS) continue;
+      if (u.kind === 'passive' && s.pa >= PASSIVE_SLOTS + ((G.player && G.player.passiveBonus) || 0)) continue;
     }
     pool.push(u);
   }
@@ -1532,6 +1565,17 @@ function chooseCard(i) {
   const choices = cardRow.__choices;
   if (!choices || !choices[i]) return;
   const u = choices[i];
+  if (G.levelKind === 'air') {
+    if ((G.chips || 0) < (u.cost || 0)) return;
+    G.chips -= (u.cost || 0);
+    if (u.id === 'heal') G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.3);
+    else if (u.id === 'wslot') G.player.freeSlots = (G.player.freeSlots || 0) + 1;
+    else if (u.id === 'pslot') G.player.passiveBonus = (G.player.passiveBonus || 0) + 1;
+    else if (u.id === 'up') grantRandomUpgrade(1);
+    G.levelKind = 'level';
+    showScreen(null); G.mode = 'play';
+    return;
+  }
   if (u.skip) {
     const p = G.player;
     p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.06);
@@ -1987,6 +2031,7 @@ function killEnemy(e) {
   e.dead = true;
   G.kills++;
   G.combo++;
+  G.chips = (G.chips || 0) + (e.boss ? 20 : (e.elite ? 5 : 1));
   G.comboTimer = 2.5;
   if (G.combo > G.comboBest) G.comboBest = G.combo;
   G.score += Math.round(e.score * comboMult());
@@ -2743,6 +2788,11 @@ function update(dt) {
     c.age += dt; c.life -= dt;
     const cdx = p.x - c.x, cdy = p.y - c.y;
     if (cdx * cdx + cdy * cdy < (p.r + c.r + 16) ** 2) {
+      if (c.air) {
+        G.crates.splice(i, 1);
+        openAirDrop();
+        return;
+      }
       const union = firstReadyUnion();
       const evo = firstReadyEvolution();
       if (union) {
@@ -2786,6 +2836,15 @@ function update(dt) {
   // 無限世界：走遠就把障礙與陷阱重生到附近
   if (!G.scatterOrigin || Math.hypot(p.x - G.scatterOrigin.x, p.y - G.scatterOrigin.y) > 2400) {
     regenScatter(p.x, p.y);
+  }
+
+  // 補給空投：每 3 分鐘在附近掉落
+  G.airTimer = (G.airTimer === undefined ? 180 : G.airTimer) - dt;
+  if (G.airTimer <= 0) {
+    G.airTimer = 180;
+    const aa2 = rnd(0, TAU);
+    G.crates.push({ x: p.x + Math.cos(aa2) * 260, y: p.y + Math.sin(aa2) * 260, life: 240, age: 0, r: 16, air: true });
+    G.nums.push({ x: p.x, y: p.y - 92, vx: 0, vy: -10, life: 2.6, text: '補給空投已投放', color: '#9dffdc', size: 16 });
   }
 
   // 里程碑祭壇：每 4 分鐘在附近生成一座，讓玩家決定要不要繞路
