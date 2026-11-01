@@ -1955,6 +1955,9 @@ function pickType() {
   if (t > 40) w.push(['turret', 30]);
   if (t > 25) w.push(['runner', 26]);
   if (t > 85) w.push(['splitter', 20]);
+  if (t >= 120 && t < 240) { w.length = 0; w.push(['splitter', 62], ['noise', 38]); }
+  else if (t >= 240 && t < 360) { w.length = 0; w.push(['runner', 70], ['bug', 30]); }
+  else if (t >= 360) { w.length = 0; w.push(['splitter', 30], ['runner', 30], ['charger', 20], ['tank', 20]); }
   if (t > 35) w.push(['boomer', 26]);
   if (t > 45) w.push(['charger', 24]);
   if (t > 70) w.push(['wall', 8]);
@@ -2052,7 +2055,7 @@ function waveLogic(dt) {
 function spawnLogic(dt) {
   G.spawnTimer -= dt;
   if (G.spawnTimer > 0) return;
-  const interval = Math.max(0.15, 0.66 - G.t * 0.0048) / (G.spawnMul || 1);
+  const interval = Math.max(0.15, 0.66 - G.t * 0.0048) / (G.spawnMul || 1) * (G.surge > 0 ? 0.42 : 1);
   G.spawnTimer = interval * rnd(0.82, 1.18);
   if (G.enemies.length > 260) return;
   const batch = 1 + Math.min(3, Math.floor(G.t / 28));
@@ -2465,6 +2468,16 @@ function update(dt) {
     if (G.comboTimer <= 0) G.combo = 0;
   }
   G.t += dt * (G.clock || 1);
+  // 4 分鐘中期解鎖
+  if (!G.midUnlocked && G.t >= 240) {
+    G.midUnlocked = true;
+    p.freeSlots = (p.freeSlots || 0) + 1;
+    grantRandomUpgrade(2);
+    G.nums.push({ x: p.x, y: p.y - 110, vx: 0, vy: -10, life: 3.2, text: '★ 中樞突破：武器格 +1、免費升級 ×2', color: '#9dffdc', size: 19 });
+    G.shake = Math.max(G.shake, 16);
+    SFX.levelup();
+  }
+
   const nw = 1 + Math.floor(G.t / 60);
   if (nw !== G.wave) {
     G.wave = nw;
@@ -2981,10 +2994,13 @@ function update(dt) {
   G.eventTimer -= dt;
   if (G.eventTimer <= 0) {
     G.eventTimer = 90;
-    const sched = ['rain', 'elite', 'swarm', 'elite'];
+    const sched = ['frenzy', 'rain', 'elite', 'swarm'];
     const ev = sched[(G.eventIndex || 0) % sched.length];
     G.eventIndex = ((G.eventIndex || 0) + 1) % sched.length;
-    if (ev === 'rain') {
+    if (ev === 'frenzy') {
+      G.surge = 30;
+      G.nums.push({ x: p.x, y: p.y - 96, vx: 0, vy: -10, life: 2.8, text: '狂暴 30 秒！', color: '#ff5f7e', size: 20 });
+    } else if (ev === 'rain') {
       for (let i = 0; i < 5; i++) spawnCrate(p.x + rnd(-300, 300), p.y + rnd(-300, 300));
       G.nums.push({ x: p.x, y: p.y - 96, vx: 0, vy: -10, life: 2.8, text: '寶箱雨！', color: '#ffd36e', size: 20 });
     } else if (ev === 'elite') {
