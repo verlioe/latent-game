@@ -2448,6 +2448,11 @@ function update(dt) {
     if (G.comboTimer <= 0) G.combo = 0;
   }
   G.t += dt * (G.clock || 1);
+  const nw = 1 + Math.floor(G.t / 60);
+  if (nw !== G.wave) {
+    G.wave = nw;
+    if ((G.chips || 0) > 0 && G.mode === 'play' && !G.bossWarn) openShop();
+  }
   updateCamera(dt);
   if (G.hint > 0) G.hint -= dt;
   if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 42);
