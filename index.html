@@ -1990,6 +1990,8 @@ function applyGear(g, sign) {
   else if (g.stat === 'rate') p.fireRate *= (sign > 0 ? 1 + g.value : 1 / (1 + g.value));
   else if (g.stat === 'speed') p.speedMult += g.value * sign;
   else if (g.stat === 'crit') p.crit += g.value * sign;
+  else if (g.kind === 'killboom') p.killBoom = sign > 0;
+  else if (g.kind === 'lifesteal') p.lifesteal = sign > 0;
 }
 
 function spawnElite() {
@@ -2068,6 +2070,8 @@ function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
   G.kills++;
+  if (G.player.killBoom) explode(e.x, e.y, 110, 35, '#ffd36e');
+  if (G.player.lifesteal) G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.015);
   G.combo++;
   G.chips = (G.chips || 0) + (e.boss ? 20 : (e.elite ? 5 : 1));
   G.comboTimer = 2.5;
@@ -2092,6 +2096,15 @@ function killEnemy(e) {
       { stat: 'crit',  name: '瞄準晶片', v: [0.06, 0.15], color: '#ffd36e' },
     ];
     const g = pick(pool);
+    if (e.boss && Math.random() < 0.3) {
+      const lg = Math.random() < 0.5
+        ? { stat: 'legend', kind: 'killboom', name: '★ 裂變核心', color: '#ff5fa8' }
+        : { stat: 'legend', kind: 'lifesteal', name: '★ 嗜血協議', color: '#ff5fa8' };
+      G.gear.push({
+        x: e.x + 28, y: e.y, r: 14, life: 45, age: 0, value: 0.25,
+        stat: lg.stat, kind: lg.kind, name: lg.name, color: lg.color,
+      });
+    }
     G.gear.push({
       x: e.x, y: e.y, r: 12, life: 30, age: 0,
       stat: g.stat, name: g.name, color: g.color,
@@ -3686,7 +3699,9 @@ function endGame(won) {
   // 結算核心：用擊殺 / 存活 / 等級計價（分數會被 combo 倍率放大，不適合當貨幣）
   const base = Math.min(400, Math.max(1,
     Math.floor(G.kills * 0.3 + G.t * 0.3 + G.player.level * 2)));
-  const earned = Math.round((won ? base * 1.5 : base) * (G.coreMult || 1) * (G.stageCore || 1) * (1 + (G.curseBonus || 0)));
+    const bwv = Number(localStorage.getItem('latent.bestWave') || 0);
+  if ((G.wave || 1) > bwv) localStorage.setItem('latent.bestWave', String(G.wave || 1));
+const earned = Math.round((won ? base * 1.5 : base) * (G.coreMult || 1) * (G.stageCore || 1) * (1 + (G.curseBonus || 0)));
   G.meta.shards += earned;
   G.lastEarned = earned;
 
