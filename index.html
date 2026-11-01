@@ -879,6 +879,9 @@ const ACHIEVEMENTS = [
     test: s => s.kills >= 200, unlockChar: 'razor' },
   { id: 'unlock_aegis', name: '壁壘解鎖', desc: '存活 6 分鐘 → 解鎖角色', reward: 20,
     test: s => s.t >= 360, unlockChar: 'aegis' },
+  { id: 'wave8', name: '八波生存', desc: '存活 8 分鐘', reward: 25, test: s => s.t >= 480 },
+  { id: 'kills500', name: '五百連斬', desc: '單場 500 擊殺', reward: 30, test: s => s.kills >= 500 },
+  { id: 'lv15', name: '十五級', desc: '單局達到 15 級', reward: 25, test: s => s.level >= 15 },
 ];
 
 function loadMeta() {
