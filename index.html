@@ -1068,7 +1068,7 @@ const G = {
   chips: 0,
   airTimer: 180,
   gear: [],
-  equip: null,
+  gearSlots: [],
   world: { w: 4400, h: 3400 },
   cam: { x: 0, y: 0 },
   camInit: false,
@@ -1964,6 +1964,7 @@ function spawnFinalBoss() {
   e.final = true;
   e.r = 62;
   e.spd = 38;
+  e.bossName = '最終核心';
   e.color = '#ff2d55';
   e.warp = 1.4;
   e.minionCd = 2.5;
@@ -1975,6 +1976,15 @@ function spawnFinalBoss() {
   G.nums.push({ x: G.player.x, y: G.player.y - 90, vx: 0, vy: -10, life: 3, text: '最終核心降臨', color: '#ff2d55', size: 22 });
 }
 /* 精英：加大血量、金色光環、掉寶箱 */
+function applyGear(g, sign) {
+  const p = G.player;
+  if (!p || !g) return;
+  if (g.stat === 'dmg') p.dmgMult += g.value * sign;
+  else if (g.stat === 'rate') p.fireRate *= (sign > 0 ? 1 + g.value : 1 / (1 + g.value));
+  else if (g.stat === 'speed') p.speedMult += g.value * sign;
+  else if (g.stat === 'crit') p.crit += g.value * sign;
+}
+
 function spawnElite() {
   const type = pickType();
   const a = Math.random() * TAU;
@@ -2260,6 +2270,7 @@ function spawnBoss() {
   e.chargeCd = 2.2;
   e.chargeState = 'idle';
   e.pattern = (G.bossKills || 0) % 3;   // 0 召喚 / 1 衝鋒 / 2 彈幕
+  e.bossName = ['孵化者', '裂解者', '迴響'][e.pattern];
   G.bossAlive = true;
   G.shake = 16;
   G.nums.push({ x: G.player.x, y: G.player.y - 70, vx: 0, vy: -12, life: 2.2, text: 'BOSS 來襲', color: '#ff8a9d', size: 20 });
@@ -2926,34 +2937,34 @@ function update(dt) {
     SFX.levelup();
   }
 
-  /* --- 裝備拾取：分數較高就替換 --- */
+  /* --- 裝備拾取（3 格背包） --- */
   for (let i = G.gear.length - 1; i >= 0; i--) {
     const g = G.gear[i];
     g.age += dt; g.life -= dt;
     const gdx = p.x - g.x, gdy = p.y - g.y;
     if (gdx * gdx + gdy * gdy < (p.r + g.r + 14) ** 2) {
-      const cur = G.equip ? G.equip.value : 0;
-      if (g.value > cur) {
-        if (G.equip) {
-          const o = G.equip;
-          if (o.stat === 'dmg') p.dmgMult -= o.value;
-          else if (o.stat === 'rate') p.fireRate /= (1 + o.value);
-          else if (o.stat === 'speed') p.speedMult -= o.value;
-          else if (o.stat === 'crit') p.crit -= o.value;
-        }
-        G.equip = g;
-        if (g.stat === 'dmg') p.dmgMult += g.value;
-        else if (g.stat === 'rate') p.fireRate *= (1 + g.value);
-        else if (g.stat === 'speed') p.speedMult += g.value;
-        else if (g.stat === 'crit') p.crit += g.value;
+      if (!G.gearSlots) G.gearSlots = [];
+      if (G.gearSlots.length < 3) {
+        G.gearSlots.push(g);
+        applyGear(g, 1);
         G.nums.push({ x: p.x, y: p.y - 58, vx: 0, vy: -14, life: 2.2, text: '裝備：' + g.name + ' +' + Math.round(g.value * 100) + '%', color: g.color, size: 15 });
+      } else {
+        let wi = 0;
+        for (let k = 1; k < G.gearSlots.length; k++) if (G.gearSlots[k].value < G.gearSlots[wi].value) wi = k;
+        if (g.value > G.gearSlots[wi].value) {
+          applyGear(G.gearSlots[wi], -1);
+          G.gearSlots[wi] = g;
+          applyGear(g, 1);
+          G.nums.push({ x: p.x, y: p.y - 58, vx: 0, vy: -14, life: 2.2, text: '替換：' + g.name + ' +' + Math.round(g.value * 100) + '%', color: g.color, size: 15 });
+        } else {
+          G.nums.push({ x: p.x, y: p.y - 58, vx: 0, vy: -14, life: 1.6, text: '丟棄 ' + g.name, color: '#8fb7d6', size: 13 });
+        }
       }
       G.gear.splice(i, 1);
       continue;
     }
     if (g.life <= 0) G.gear.splice(i, 1);
   }
-
   /* --- 陷阱 --- */
   for (const tr of G.traps) {
     if (tr.cd > 0) tr.cd -= dt;
@@ -3610,7 +3621,7 @@ function updateHud() {
     if (boss) {
       $('bossFill').style.width = Math.max(0, (boss.hp / boss.maxHp) * 100) + '%';
       const nm = bb.querySelector('.bossName');
-      if (nm) nm.textContent = boss.final ? '最終核心' : '雜訊聚合體';
+      if (nm) nm.textContent = boss.bossName || (boss.final ? '最終核心' : '雜訊聚合體');
     }
   }
   const s = Math.floor(G.t);
