@@ -703,6 +703,9 @@ const ENEMY = {
   mite:   { r: 7,  hp: 5,   spd: 205, xp: 1, dmg: 6,  score: 6,  color: '#ffb347', sides: 3, spin: 5 },
   boss:   { r: 46, hp: 900, spd: 44,  xp: 30, dmg: 34, score: 600, color: '#ff3d6e', sides: 6, spin: 0.5 },
   turret: { r: 15, hp: 26,  spd: 92,  xp: 3,  dmg: 14, score: 42, color: '#ff6bd6', sides: 5, spin: -2.2 },
+  sniper: { r: 16, hp: 30,  spd: 66,  xp: 4,  dmg: 22, score: 58, color: '#ff5f7e', sides: 4, spin: 0.6 },
+  runner: { r: 9,  hp: 12,  spd: 246, xp: 2,  dmg: 8,  score: 20, color: '#9dffdc', sides: 3, spin: 6 },
+  splitter:{ r: 18, hp: 38, spd: 98,  xp: 3,  dmg: 13, score: 40, color: '#7dd3ff', sides: 4, spin: 2, split: 3 },
   boomer: { r: 16, hp: 24,  spd: 128, xp: 2,  dmg: 10, score: 32, color: '#ff7a3d', sides: 8, spin: 1.4 },
   charger:{ r: 15, hp: 34,  spd: 74,  xp: 3,  dmg: 18, score: 38, color: '#ffd36e', sides: 3, spin: 0 },
   wall:   { r: 36, hp: 260, spd: 26,  xp: 8,  dmg: 22, score: 140, color: '#8fb7d6', sides: 4, spin: 0.2 },
@@ -1945,6 +1948,9 @@ function pickType() {
   if (t > 12) w.push(['bug', 72]);
   if (t > 30) w.push(['glitch', 42]);
   if (t > 40) w.push(['turret', 30]);
+  if (t > 25) w.push(['runner', 26]);
+  if (t > 55) w.push(['sniper', 18]);
+  if (t > 85) w.push(['splitter', 20]);
   if (t > 35) w.push(['boomer', 26]);
   if (t > 45) w.push(['charger', 24]);
   if (t > 70) w.push(['wall', 8]);
@@ -2520,7 +2526,8 @@ function update(dt) {
     }
 
     // 遠程怪：保持距離並定期開火
-    if (e.type === 'turret') {
+    if (e.type === 'turret' || e.type === 'sniper') {
+      if (e.cd === undefined) e.cd = 1.6;
       if (d < 300) { ax = 0; ay = 0; }
       e.fireCd = (e.fireCd === undefined ? rnd(0.6, 1.6) : e.fireCd) - dt;
       if (e.fireCd <= 0 && d < 780) {
