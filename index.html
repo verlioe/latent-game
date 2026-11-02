@@ -2062,6 +2062,7 @@ function spawnLogic(dt) {
   G.spawnTimer = interval * rnd(0.82, 1.18);
   if (G.enemies.length > 260) return;
   const batch = 1 + Math.min(3, Math.floor(G.t / 28));
+  if (G.enemies.length > 230) return;   // 硬性上限，避免後期卡頓
   for (let i = 0; i < batch; i++) {
     const pos = spawnPoint();
     spawnEnemy(pickType(), pos.x, pos.y);
