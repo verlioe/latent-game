@@ -3756,7 +3756,16 @@ function victory() {
   G.slow = 0.9;
   G.shake = 30;
   SFX.levelup();
-  endGame(true);
+  try {
+    endGame(true);
+  } catch (err) {
+    console.error('victory failed', err);
+  }
+  try {
+    showScreen('dead');
+  } catch (err) {}
+  G.mode = 'dead';
+  G.won = true;
 }
 
 function endGame(won) {
