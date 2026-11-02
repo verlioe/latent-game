@@ -2465,7 +2465,7 @@ function update(dt) {
   const p = G.player;
   if (G.hitStop > 0) { G.hitStop -= dt; dt *= 0.12; }
   // 實體上限：超過就丟最舊的，避免後期卡頓
-  if (G.parts.length > 260) G.parts.splice(0, G.parts.length - 260);
+  if (G.parts.length > 200) G.parts.splice(0, G.parts.length - 200);
   if (G.nums.length > 90) G.nums.splice(0, G.nums.length - 90);
   if (G.rings.length > 50) G.rings.splice(0, G.rings.length - 50);
   if (G.bullets.length > 260) G.bullets.splice(0, G.bullets.length - 260);
@@ -2547,6 +2547,8 @@ function update(dt) {
   for (const e of G.enemies) {
     if (e.dead) continue;
     if (e.warp > 0) { e.warp -= dt; e.rot += e.spin * dt * 0.4; if (e.flash > 0) e.flash -= dt; continue; }
+    // 遠處敵人跳過 AI（省每幀運算）
+    if (Math.abs(e.x - p.x) > 1500 || Math.abs(e.y - p.y) > 1500) continue;
     const dx = p.x - e.x, dy = p.y - e.y;
     const d = Math.hypot(dx, dy) || 1;
     let ax = dx / d, ay = dy / d;
@@ -3174,7 +3176,7 @@ function drawWorld() {
   for (let gx = cxs - 1; gx <= cxs + Math.ceil(VW / 160); gx++) {
     for (let gy = cys - 1; gy <= cys + Math.ceil(VH / 160); gy++) {
       let s = ((gx * 73856093) ^ (gy * 19349663)) >>> 0;
-      const starN = TOUCH.engaged ? 1 : 3;
+      const starN = TOUCH.engaged ? 1 : 2;
       for (let i = 0; i < starN; i++) {
         s = (s * 1664525 + 1013904223) >>> 0;
         const sx = gx * 160 + (s % 160);
