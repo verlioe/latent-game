@@ -1521,6 +1521,7 @@ function buildPool() {
 }
 
 function pickWeighted(pool, n) {
+  if (!pool || !pool.length) return [];
   const out = [], arr = pool.slice();
   while (out.length < n && arr.length) {
     let total = 0;
@@ -2463,6 +2464,13 @@ function chainLightning() {
 function update(dt) {
   const p = G.player;
   if (G.hitStop > 0) { G.hitStop -= dt; dt *= 0.12; }
+  // 實體上限：超過就丟最舊的，避免後期卡頓
+  if (G.parts.length > 260) G.parts.splice(0, G.parts.length - 260);
+  if (G.nums.length > 90) G.nums.splice(0, G.nums.length - 90);
+  if (G.rings.length > 50) G.rings.splice(0, G.rings.length - 50);
+  if (G.bullets.length > 260) G.bullets.splice(0, G.bullets.length - 260);
+  if (G.ebullets.length > 160) G.ebullets.splice(0, G.ebullets.length - 160);
+  if (G.shards.length > 300) G.shards.splice(0, G.shards.length - 300);
   if (G.slow > 0) G.slow -= dt;
   if (G.slow > 0) dt *= 0.35;             // 首領擊殺慢動作
   if (G.comboTimer > 0) {
