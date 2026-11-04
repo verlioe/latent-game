@@ -1729,7 +1729,9 @@ function fire() {
     if (pa) p.aim = Math.atan2(pa.y, pa.x);
     else if (G.mouse) p.aim = Math.atan2(G.mouse.y + G.cam.y - p.y, G.mouse.x + G.cam.x - p.x);
   } else {
-    const target = nearestEnemy(p.x, p.y, 1400);
+    // 首領優先：範圍內有首領就先打它（否則自動瞄準永遠打在雜兵上）
+    const bossT = G.enemies.find((e) => e.boss && !e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 900);
+    const target = bossT || nearestEnemy(p.x, p.y, 1400);
     if (target) p.aim = Math.atan2(target.y - p.y, target.x - p.x);
   }
 
