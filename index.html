@@ -2890,13 +2890,13 @@ function update(dt) {
   /* --- 精英 / 包圍波 --- */
   G.eliteTimer -= dt;
   if (G.eliteTimer <= 0) {
-    G.eliteTimer = Math.max(16, 32 - G.t * 0.06);
+    G.eliteTimer = Math.max(24, 42 - G.t * 0.06);
     spawnElite();
   }
   if (G.t > 22) {
     G.surroundTimer -= dt;
     if (G.surroundTimer <= 0) {
-      G.surroundTimer = Math.max(16, 30 - G.t * 0.05);
+      G.surroundTimer = Math.max(26, 42 - G.t * 0.05);
       surroundWave();
     }
   }
