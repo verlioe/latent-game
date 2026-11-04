@@ -3073,10 +3073,19 @@ function update(dt) {
   G.eventTimer -= dt;
   if (G.eventTimer <= 0) {
     G.eventTimer = 90;
-    const sched = ['frenzy', 'storm', 'rain', 'elite', 'swarm', 'storm'];
+    const sched = ['frenzy', 'storm', 'grav', 'rain', 'elite', 'swarm'];
     const ev = sched[(G.eventIndex || 0) % sched.length];
     G.eventIndex = ((G.eventIndex || 0) + 1) % sched.length;
-    if (ev === 'storm') {
+    if (ev === 'grav') {
+      const cx = p.x + rnd(-140, 140), cy = p.y + rnd(-140, 140);
+      for (const en of G.enemies) {
+        const dx = en.x - cx, dy = en.y - cy, dd = Math.hypot(dx, dy) || 1;
+        if (dd < 460) { en.x = cx + dx / dd * Math.min(dd, 42); en.y = cy + dy / dd * Math.min(dd, 42); }
+      }
+      explode(cx, cy, 160, 95, '#b06bff');
+      G.shake = Math.max(G.shake, 14);
+      G.nums.push({ x: p.x, y: p.y - 96, vx: 0, vy: -10, life: 2.8, text: '重力井！', color: '#b06bff', size: 20 });
+    } else if (ev === 'storm') {
       G.stormT = 2.4;
       G.nums.push({ x: p.x, y: p.y - 96, vx: 0, vy: -10, life: 2.8, text: '資料風暴！', color: '#9dffdc', size: 20 });
     } else if (ev === 'frenzy') {
