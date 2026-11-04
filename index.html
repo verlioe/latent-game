@@ -1444,7 +1444,7 @@ function checkLevelUp() {
   if (p.xp >= p.xpNext) {
     p.xp -= p.xpNext;
     p.level++;
-    p.maxHp += 7; p.hp = Math.min(p.maxHp, p.hp + 7);   // 每級 +7 最大生命
+    p.maxHp += 7; p.hp = Math.min(p.maxHp, p.hp + 7 + p.maxHp * 0.12);   // 每級 +7 最大生命並回復 12%
     p.xpNext = Math.round(p.xpNext * 1.26 + 2);
     G.pendingLevels++;
   }
