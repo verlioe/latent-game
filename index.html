@@ -1963,6 +1963,7 @@ function pickType() {
   if (t > 30) w.push(['glitch', 42]);
   if (t > 40) w.push(['turret', 30]);
   if (t > 25) w.push(['runner', 26]);
+  if (t > 70) w.push(['sniper', 16]);
   if (t > 85) w.push(['splitter', 20]);
 
   if (t > 35) w.push(['boomer', 26]);
@@ -2920,7 +2921,8 @@ function update(dt) {
       G.ebullets.splice(i, 1);
       continue;
     }
-    if (b.life <= 0 || b.x < -60 || b.x > VW + 60 || b.y < -60 || b.y > VH + 60) G.ebullets.splice(i, 1);
+    // 舊版用螢幕尺寸 VW/VH 當邊界，但子彈是「世界座標」→ 生成瞬間就被判定出界
+    if (b.life <= 0 || Math.hypot(b.x - G.player.x, b.y - G.player.y) > 2200) G.ebullets.splice(i, 1);
   }
 
   /* --- 寶箱 / 道具 --- */
