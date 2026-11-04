@@ -1441,6 +1441,7 @@ function checkLevelUp() {
   if (p.xp >= p.xpNext) {
     p.xp -= p.xpNext;
     p.level++;
+    p.maxHp += 4; p.hp = Math.min(p.maxHp, p.hp + 4);   // 每級 +4 最大生命
     p.xpNext = Math.round(p.xpNext * 1.26 + 2);
     G.pendingLevels++;
   }
