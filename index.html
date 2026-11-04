@@ -1918,6 +1918,8 @@ function updateCamera(dt) {
    9. 敵人
    ============================================================ */
 function spawnEnemy(type, x, y) {
+  // 全域數量上限（首領例外）
+  if (type !== 'boss' && G.enemies.length > 230) return;
   const cfg = ENEMY[type];
   const scale = 1 + G.t / 48;
   const hp = cfg.hp * scale * ((G.player && G.player.enemyHp) || 1);
@@ -2200,7 +2202,7 @@ function killEnemy(e) {
   if (e.split) {
     for (let i = 0; i < e.split; i++) {
       const m = spawnEnemy('mite', e.x + rnd(-8, 8), e.y + rnd(-8, 8));
-      m.spd *= 1.05;
+      if (m) m.spd *= 1.05;   // 上限擋掉時 spawnEnemy 會回 undefined
     }
   }
   rollDrops(e);
