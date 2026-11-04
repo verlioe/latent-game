@@ -1967,7 +1967,7 @@ function spawnEnemy(type, x, y) {
   // 超上限時回傳「空物件」，呼叫端設定屬性不會炸（曾造成卡死）
   if (type !== 'boss' && G.enemies.length > 110) return { x: 0, y: 0, dummy: true };
   const cfg = ENEMY[type];
-  const scale = 1 + G.t / 95;
+  const scale = 1 + G.t / 120;
   // 首領不吃時間血量成長（否則 10 分鐘時血量 ×7.3，玩家打不動）
   const bossScale = 1 + Math.min(G.t, 240) / 240;
   const hp = cfg.hp * (type === 'boss' ? bossScale : scale) * ((G.player && G.player.enemyHp) || 1);
@@ -2015,7 +2015,7 @@ function pickType() {
   // 段落式組成：每 2 分鐘換一組，覆寫前面的權重
   if (t >= 120 && t < 240) { w.length = 0; w.push(['splitter', 62], ['noise', 38]); }
   else if (t >= 240 && t < 360) { w.length = 0; w.push(['runner', 70], ['bug', 30]); }
-  else if (t >= 360) { w.length = 0; w.push(['splitter', 30], ['runner', 30], ['charger', 20], ['tank', 20]); }
+  else if (t >= 360) { w.length = 0; w.push(['splitter', 38], ['runner', 38], ['charger', 14], ['tank', 10]); }
   let total = 0;
   for (const p of w) total += p[1];
   let r = Math.random() * total;
