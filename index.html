@@ -2096,6 +2096,7 @@ function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
   G.kills++;
+  if (e.boss) { G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.25); G.nums.push({ x: e.x, y: e.y - 40, vx: 0, vy: -12, life: 2.4, text: '首領擊破：+25% 生命', color: '#9dffdc', size: 17 }); }
   if (G.player.killBoom) explode(e.x, e.y, 110, 35, '#ffd36e');
   if (G.player.lifesteal) G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.015);
   // 擊飛：把附近敵人推開
