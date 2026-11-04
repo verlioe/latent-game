@@ -733,6 +733,7 @@ const UPGRADES = [
   { id: 'boomerang', name: '迴力鏢',  icon: '⟲', desc: '擲出後回旋，來回都造成傷害', max: 5, apply: p => { p.weapons.boomerang++; } },
   { id: 'shot', name: '散射霰彈', icon: '⁂', desc: '近距離扇形散射，貼臉傷害極高', max: 5, apply: p => { p.weapons.shot++; } },
   { id: 'rail', name: '軌道炮', icon: '⇶', desc: '蓄力發射穿透彈，貫穿整排敵人', max: 5, apply: p => { p.weapons.rail++; } },
+  { id: 'aura', name: '冰霜環', icon: '◎', desc: '持續對周圍敵人造成傷害', max: 5, apply: p => { p.weapons.aura++; } },
   { id: 'beam',   name: '貫穿光束',   icon: '≡', desc: '朝瞄準方向持續貫穿',         max: 5, apply: p => { p.weapons.beam++; } },
 ];
 
@@ -779,8 +780,8 @@ const EVOLUTIONS = [
 /* 欄位與稀有度：武器 6 格、被動 6 格；權重決定卡片出現率 */
 const WEAPON_SLOTS = 6;
 const PASSIVE_SLOTS = 6;
-const WEAPON_IDS = ['blade', 'missile', 'spike', 'whip', 'boomerang', 'beam', 'shot', 'rail'];
-const WEAPON_WEIGHT = { blade: 72, missile: 62, spike: 62, whip: 56, boomerang: 56, beam: 50, shot: 54, rail: 50 };
+const WEAPON_IDS = ['blade', 'missile', 'spike', 'whip', 'boomerang', 'beam', 'shot', 'rail', 'aura'];
+const WEAPON_WEIGHT = { blade: 72, missile: 62, spike: 62, whip: 56, boomerang: 56, beam: 50, shot: 54, rail: 50, aura: 48 };
 const PASSIVE_WEIGHT = {
   dmg: 100, rate: 100, speed: 92, hp: 90, magnet: 82, multi: 80,
   pierce: 72, crit: 70, regen: 70, dash: 68, boom: 62, aura: 60, drone: 54, chain: 54,
@@ -992,7 +993,7 @@ function renderMeta() {
 
   // 武器圖鑑
   if (ui.codexList) {
-    const weaponIds = { blade: 1, missile: 1, spike: 1, whip: 1, boomerang: 1, beam: 1, shot: 1, rail: 1 };
+    const weaponIds = { blade: 1, missile: 1, spike: 1, whip: 1, boomerang: 1, beam: 1, shot: 1, rail: 1, aura: 1 };
     const items = [];
     for (const u of UPGRADES) {
       if (weaponIds[u.id]) items.push(`<span><b>${u.name}</b>　${u.desc}</span>`);
@@ -1122,8 +1123,8 @@ function makePlayer() {
     dashCdMax: 1.35, dashCd: 0, dashTime: 0, dashDir: { x: 1, y: 0 },
     invuln: 0, fireCd: 0, aim: -Math.PI / 2, trail: 0, hurtFlash: 0, xpFlash: 0,
     xpMult: 1,
-    weapons: { blade: 0, missile: 0, spike: 0, whip: 0, boomerang: 0, beam: 0, shot: 0, rail: 0 },
-    evolved: { blade: false, missile: false, spike: false, whip: false, boomerang: false, beam: false, shot: false, rail: false },
+    weapons: { blade: 0, missile: 0, spike: 0, whip: 0, boomerang: 0, beam: 0, shot: 0, rail: 0, aura: 0 },
+    evolved: { blade: false, missile: false, spike: false, whip: false, boomerang: false, beam: false, shot: false, rail: false, aura: false },
     missileCd: 1, spikeCd: 1.4, whipCd: 1, boomCd: 1.6, beamCd: 0,
     slashT: 0,
     echo: 0, dmgTaken: 1, enemyHp: 1, cdMult: 1, thorn: 0, bulletSpeed: 1,
@@ -1340,8 +1341,8 @@ function setPause(on) {
 
 function weaponListText() {
   const p = G.player;
-  const names = { blade: '環繞刃', missile: '飛彈', spike: '地刺', whip: '裂空鞭', boomerang: '迴力鏢', beam: '光束', shot: '散射霰彈', rail: '軌道炮' };
-  const evo = { blade: '軌道鋸', missile: '蜂群飛彈', spike: '裂地脈衝', whip: '斷界鞭', boomerang: '雙旋刃', beam: '湮滅射線', shot: '碎星霰彈', rail: '殲星軌道炮' };
+  const names = { blade: '環繞刃', missile: '飛彈', spike: '地刺', whip: '裂空鞭', boomerang: '迴力鏢', beam: '光束', shot: '散射霰彈', rail: '軌道炮', aura: '冰霜環' };
+  const evo = { blade: '軌道鋸', missile: '蜂群飛彈', spike: '裂地脈衝', whip: '斷界鞭', boomerang: '雙旋刃', beam: '湮滅射線', shot: '碎星霰彈', rail: '殲星軌道炮', aura: '絕對零度' };
   const out = [];
   for (const k in names) {
     const lv = p.weapons[k];
@@ -1894,6 +1895,15 @@ function updateWeapons(dt) {
       r: 8, life: 1.4, color: '#b06bff',
     });
     SFX.shoot();
+  }
+
+  // 冰霜環
+  p.auraCd = (p.auraCd === undefined ? 0 : p.auraCd) - dt;
+  if (p.weapons.aura > 0 && p.auraCd <= 0) {
+    const lvA = p.weapons.aura, evoA = p.evolved.aura;
+    p.auraCd = Math.max(0.45, 1.2 - lvA * 0.1) * p.cdMult;
+    const rad = (86 + lvA * 10) * (evoA ? 1.3 : 1);
+    explode(p.x, p.y, rad, (5 + lvA * 2.4) * p.dmgMult * (evoA ? 1.4 : 1), '#7fd4ff');
   }
 
   // 貫穿光束
