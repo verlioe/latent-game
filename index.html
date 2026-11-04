@@ -1923,7 +1923,9 @@ function spawnEnemy(type, x, y) {
   if (type !== 'boss' && G.enemies.length > 230) return { x: 0, y: 0, dummy: true };
   const cfg = ENEMY[type];
   const scale = 1 + G.t / 95;
-  const hp = cfg.hp * scale * ((G.player && G.player.enemyHp) || 1);
+  // 首領不吃時間血量成長（否則 10 分鐘時血量 ×7.3，玩家打不動）
+  const bossScale = 1 + Math.min(G.t, 240) / 240;
+  const hp = cfg.hp * (type === 'boss' ? bossScale : scale) * ((G.player && G.player.enemyHp) || 1);
   const e = {
     id: ++G.eid, type, x, y, r: cfg.r,
     hp, maxHp: hp,
