@@ -3018,10 +3018,13 @@ function update(dt) {
   G.eventTimer -= dt;
   if (G.eventTimer <= 0) {
     G.eventTimer = 90;
-    const sched = ['frenzy', 'rain', 'elite', 'swarm'];
+    const sched = ['frenzy', 'storm', 'rain', 'elite', 'swarm', 'storm'];
     const ev = sched[(G.eventIndex || 0) % sched.length];
     G.eventIndex = ((G.eventIndex || 0) + 1) % sched.length;
-    if (ev === 'frenzy') {
+    if (ev === 'storm') {
+      G.stormT = 2.4;
+      G.nums.push({ x: p.x, y: p.y - 96, vx: 0, vy: -10, life: 2.8, text: '資料風暴！', color: '#9dffdc', size: 20 });
+    } else if (ev === 'frenzy') {
       G.surge = 30;
       G.nums.push({ x: p.x, y: p.y - 96, vx: 0, vy: -10, life: 2.8, text: '狂暴 30 秒！', color: '#ff5f7e', size: 20 });
     } else if (ev === 'rain') {
@@ -3082,6 +3085,18 @@ function update(dt) {
       explode(m.x, m.y, m.r + 26, 60, '#ff9f43');
       G.shake = Math.max(G.shake, 10);
       G.meteors.splice(i, 1);
+    }
+  }
+
+  // 資料風暴：2.4 秒內在玩家周圍連續引爆
+  if (G.stormT > 0) {
+    G.stormT -= dt;
+    G.stormTick = (G.stormTick || 0) - dt;
+    if (G.stormTick <= 0) {
+      G.stormTick = 0.4;
+      const a = rnd(0, TAU), rr = rnd(60, 320);
+      explode(p.x + Math.cos(a) * rr, p.y + Math.sin(a) * rr, 120, 45, '#9dffdc');
+      G.shake = Math.max(G.shake, 6);
     }
   }
 
