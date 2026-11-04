@@ -2111,7 +2111,7 @@ function waveLogic(dt) {
 function spawnLogic(dt) {
   G.spawnTimer -= dt;
   if (G.spawnTimer > 0) return;
-  const interval = Math.max(0.22, 0.95 - G.t * 0.0042) / (G.spawnMul || 1) * (G.surge > 0 ? 0.65 : 1);
+  const interval = Math.max(0.22, 0.95 - G.t * 0.0042) / (G.spawnMul || 1) * (G.surge > 0 ? 0.82 : 1);
   G.spawnTimer = interval * rnd(0.82, 1.18);
   if (G.enemies.length > 260) return;
   const batch = 1 + Math.min(3, Math.floor(G.t / 42));
