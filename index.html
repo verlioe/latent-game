@@ -1922,7 +1922,7 @@ function spawnEnemy(type, x, y) {
   // 超上限時回傳「空物件」，呼叫端設定屬性不會炸（曾造成卡死）
   if (type !== 'boss' && G.enemies.length > 230) return { x: 0, y: 0, dummy: true };
   const cfg = ENEMY[type];
-  const scale = 1 + G.t / 48;
+  const scale = 1 + G.t / 95;
   const hp = cfg.hp * scale * ((G.player && G.player.enemyHp) || 1);
   const e = {
     id: ++G.eid, type, x, y, r: cfg.r,
