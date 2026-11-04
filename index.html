@@ -1988,7 +1988,7 @@ function spawnFinalBoss() {
   const e = spawnEnemy('boss',
     G.player.x + Math.cos(a) * dist,
     G.player.y + Math.sin(a) * dist);
-  e.maxHp = 5200 + G.t * 16;
+  e.maxHp = 3200 + G.t * 4.5;
   e.hp = e.maxHp;
   e.boss = true;
   e.final = true;
@@ -2321,7 +2321,7 @@ function spawnBoss() {
   const e = spawnEnemy('boss',
     G.player.x + Math.cos(a) * dist,
     G.player.y + Math.sin(a) * dist);
-  e.maxHp = 800 + G.t * 14;
+  e.maxHp = 620 + G.t * 5.5;
   e.hp = e.maxHp;
   e.boss = true;
   e.warp = 1.1;
