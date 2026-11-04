@@ -1923,7 +1923,7 @@ function updateCamera(dt) {
 function spawnEnemy(type, x, y) {
   // 全域數量上限（首領例外）
   // 超上限時回傳「空物件」，呼叫端設定屬性不會炸（曾造成卡死）
-  if (type !== 'boss' && G.enemies.length > 140) return { x: 0, y: 0, dummy: true };
+  if (type !== 'boss' && G.enemies.length > 110) return { x: 0, y: 0, dummy: true };
   const cfg = ENEMY[type];
   const scale = 1 + G.t / 95;
   // 首領不吃時間血量成長（否則 10 分鐘時血量 ×7.3，玩家打不動）
@@ -2066,11 +2066,11 @@ function waveLogic(dt) {
 function spawnLogic(dt) {
   G.spawnTimer -= dt;
   if (G.spawnTimer > 0) return;
-  const interval = Math.max(0.22, 0.95 - G.t * 0.0042) / (G.spawnMul || 1) * (G.surge > 0 ? 0.5 : 1);
+  const interval = Math.max(0.22, 0.95 - G.t * 0.0042) / (G.spawnMul || 1) * (G.surge > 0 ? 0.65 : 1);
   G.spawnTimer = interval * rnd(0.82, 1.18);
   if (G.enemies.length > 260) return;
   const batch = 1 + Math.min(3, Math.floor(G.t / 42));
-  if (G.enemies.length > 140) return;   // 硬性上限，避免後期卡頓
+  if (G.enemies.length > 110) return;   // 硬性上限，避免後期卡頓
   for (let i = 0; i < batch; i++) {
     const pos = spawnPoint();
     spawnEnemy(pickType(), pos.x, pos.y);
