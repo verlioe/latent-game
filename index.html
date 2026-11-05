@@ -2156,7 +2156,8 @@ function killEnemy(e) {
       G.slashes.push({ x1: e.x, y1: e.y, x2: o.x, y2: o.y, life: 0.18, max: 0.18, color: '#9dffdc' });
       explode(o.x, o.y, 56, 26, '#9dffdc');
     }
-  }  if (e.boss) { G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.25); G.nums.push({ x: e.x, y: e.y - 40, vx: 0, vy: -12, life: 2.4, text: '首領擊破：+25% 生命', color: '#9dffdc', size: 17 }); }
+  }  if (e.boss && e.spawnAt != null) { G.bossFights = G.bossFights || []; G.bossFights.push(+(G.t - e.spawnAt).toFixed(1)); }
+  if (e.boss) { G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.25); G.nums.push({ x: e.x, y: e.y - 40, vx: 0, vy: -12, life: 2.4, text: '首領擊破：+25% 生命', color: '#9dffdc', size: 17 }); }
   if (G.player.killBoom) explode(e.x, e.y, 110, 35, '#ffd36e');
   if (G.player.lifesteal) G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.015);
   // 錨點全滅 → 首領破盾
@@ -2408,6 +2409,7 @@ function spawnBoss() {
   e.bossName = ['孵化者', '裂解者', '迴響'][e.pattern];
   e.shielded = true;
   e.phase = 1;
+  e.spawnAt = G.t;
   for (let k = 0; k < 2; k++) {
     const aa = (k / 2) * TAU + 0.6;
     spawnEnemy('anchor', G.player.x + Math.cos(aa) * 230, G.player.y + Math.sin(aa) * 230);
