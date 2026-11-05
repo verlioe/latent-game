@@ -2036,7 +2036,7 @@ function spawnFinalBoss() {
   const e = spawnEnemy('boss',
     G.player.x + Math.cos(a) * dist,
     G.player.y + Math.sin(a) * dist);
-  e.maxHp = 3200 + G.t * 4.5;
+  e.maxHp = 1500 + G.t * 2.2;   // 450 秒時約 2,490（約一般首領的 1.6 倍）
   e.hp = e.maxHp;
   e.boss = true;
   e.final = true;
