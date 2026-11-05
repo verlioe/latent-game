@@ -708,6 +708,7 @@ const ENEMY = {
   splitter:{ r: 18, hp: 38, spd: 98,  xp: 3,  dmg: 13, score: 40, color: '#7dd3ff', sides: 4, spin: 2, split: 2 },
   boomer: { r: 16, hp: 24,  spd: 128, xp: 2,  dmg: 10, score: 32, color: '#ff7a3d', sides: 8, spin: 1.4 },
   charger:{ r: 15, hp: 34,  spd: 74,  xp: 3,  dmg: 18, score: 38, color: '#ffd36e', sides: 3, spin: 0 },
+  anchor: { r: 24, hp: 240, spd: 0,   xp: 5,  dmg: 0,  score: 150, color: '#ffd36e', sides: 3, spin: 1.2 },
   wall:   { r: 36, hp: 260, spd: 26,  xp: 8,  dmg: 22, score: 140, color: '#8fb7d6', sides: 4, spin: 0.2 },
 };
 
@@ -2124,6 +2125,7 @@ function spawnLogic(dt) {
 }
 
 function damageEnemy(e, dmg, opts) {
+  if (e.shielded) return false;   // 錨點未破，首領免疫
   if (e.dead) return;
   e.hp -= dmg;
   G.dmgDealt += dmg;
@@ -2155,6 +2157,20 @@ function killEnemy(e) {
   }  if (e.boss) { G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.25); G.nums.push({ x: e.x, y: e.y - 40, vx: 0, vy: -12, life: 2.4, text: '首領擊破：+25% 生命', color: '#9dffdc', size: 17 }); }
   if (G.player.killBoom) explode(e.x, e.y, 110, 35, '#ffd36e');
   if (G.player.lifesteal) G.player.hp = Math.min(G.player.maxHp, G.player.hp + G.player.maxHp * 0.015);
+  // 錨點全滅 → 首領破盾
+  if (e.type === 'anchor') {
+    const left = G.enemies.filter((o) => o.type === 'anchor' && !o.dead && o !== e).length;
+    if (left === 0) {
+      const b = G.enemies.find((o) => o.boss);
+      if (b && b.shielded) {
+        b.shielded = false; b.phase = 2;
+        G.shake = Math.max(G.shake, 18);
+        G.nums.push({ x: b.x, y: b.y - 110, vx: 0, vy: -9, life: 2.6, text: '護盾破裂！', color: '#9dffdc', size: 20 });
+        SFX.bigKill();
+      }
+    }
+  }
+
   // 擊飛：把附近敵人推開
   for (const o of G.enemies) {
     if (o === e || o.dead) continue;
@@ -2388,6 +2404,13 @@ function spawnBoss() {
   e.chargeState = 'idle';
   e.pattern = (G.bossKills || 0) % 3;   // 0 召喚 / 1 衝鋒 / 2 彈幕
   e.bossName = ['孵化者', '裂解者', '迴響'][e.pattern];
+  e.shielded = true;
+  e.phase = 1;
+  for (let k = 0; k < 2; k++) {
+    const aa = (k / 2) * TAU + 0.6;
+    spawnEnemy('anchor', e.x + Math.cos(aa) * 210, e.y + Math.sin(aa) * 210);
+  }
+  G.nums.push({ x: e.x, y: e.y - 120, vx: 0, vy: -8, life: 3, text: '先破壞 2 個錨點才能破盾！', color: '#ffd36e', size: 17 });
   G.bossAlive = true;
   G.shake = 16;
   G.nums.push({ x: G.player.x, y: G.player.y - 70, vx: 0, vy: -12, life: 2.2, text: 'BOSS 來襲', color: '#ff8a9d', size: 20 });
@@ -2676,6 +2699,8 @@ function update(dt) {
     if (e.bladeCd > 0) e.bladeCd -= dt;
 
     if (e.boss) {
+      if (e.shielded) { ax *= 0.35; ay *= 0.35; }
+      else { e.pattern = (e.hp < e.maxHp * 0.45) ? 2 : 1; e.phase = (e.hp < e.maxHp * 0.45) ? 3 : 2; }
       // 衝鋒型首領
       if (e.pattern === 1 && !e.final) {
         if (e.chargeState === 'dash') {
