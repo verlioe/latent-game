@@ -2410,7 +2410,7 @@ function spawnBoss() {
   e.phase = 1;
   for (let k = 0; k < 2; k++) {
     const aa = (k / 2) * TAU + 0.6;
-    spawnEnemy('anchor', e.x + Math.cos(aa) * 210, e.y + Math.sin(aa) * 210);
+    spawnEnemy('anchor', G.player.x + Math.cos(aa) * 230, G.player.y + Math.sin(aa) * 230);
   }
   G.nums.push({ x: e.x, y: e.y - 120, vx: 0, vy: -8, life: 3, text: '先破壞 2 個錨點才能破盾！', color: '#ffd36e', size: 17 });
   G.bossAlive = true;
