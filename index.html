@@ -708,7 +708,7 @@ const ENEMY = {
   splitter:{ r: 18, hp: 38, spd: 98,  xp: 3,  dmg: 13, score: 40, color: '#7dd3ff', sides: 4, spin: 2, split: 2 },
   boomer: { r: 16, hp: 24,  spd: 128, xp: 2,  dmg: 10, score: 32, color: '#ff7a3d', sides: 8, spin: 1.4 },
   charger:{ r: 15, hp: 34,  spd: 74,  xp: 3,  dmg: 18, score: 38, color: '#ffd36e', sides: 3, spin: 0 },
-  anchor: { r: 24, hp: 240, spd: 0,   xp: 5,  dmg: 0,  score: 150, color: '#ffd36e', sides: 3, spin: 1.2 },
+  anchor: { r: 24, hp: 150, spd: 0,   xp: 5,  dmg: 0,  score: 150, color: '#ffd36e', sides: 3, spin: 1.2 },
   wall:   { r: 36, hp: 260, spd: 26,  xp: 8,  dmg: 22, score: 140, color: '#8fb7d6', sides: 4, spin: 0.2 },
 };
 
@@ -1736,7 +1736,9 @@ function fire() {
     else if (G.mouse) p.aim = Math.atan2(G.mouse.y + G.cam.y - p.y, G.mouse.x + G.cam.x - p.x);
   } else {
     // 首領優先：範圍內有首領就先打它（否則自動瞄準永遠打在雜兵上）
-    const bossT = G.enemies.find((e) => e.boss && !e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 900);
+    const shieldedBoss = G.enemies.some((e) => e.boss && e.shielded);
+    const anchorT = shieldedBoss ? G.enemies.find((e) => e.type === 'anchor' && !e.dead) : null;
+    const bossT = anchorT || G.enemies.find((e) => e.boss && !e.shielded && !e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 900);
     const target = bossT || nearestEnemy(p.x, p.y, 1400);
     if (target) p.aim = Math.atan2(target.y - p.y, target.x - p.x);
   }
@@ -2395,7 +2397,7 @@ function spawnBoss() {
   const e = spawnEnemy('boss',
     G.player.x + Math.cos(a) * dist,
     G.player.y + Math.sin(a) * dist);
-  e.maxHp = 620 + G.t * 5.5;
+  e.maxHp = 400 + G.t * 2.6;
   e.hp = e.maxHp;
   e.boss = true;
   e.warp = 1.1;
