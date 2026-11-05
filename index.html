@@ -1223,6 +1223,7 @@ window.addEventListener('keydown', (e) => {
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'escape'].includes(k)) e.preventDefault();
   keys[k] = true;
 
+  if (k === 'q') useQ();
   if (k === 'f2') G.debug = !G.debug;
   if (k === 'b' && G.mode === 'play') openShop();
   // 密技：在標題畫面打 latent
@@ -3164,6 +3165,23 @@ function update(dt) {
     }
   }
 
+  // Q 技能冷卻 + 按鈕（首次執行時建立，桌面與觸控共用）
+  p.qCd = Math.max(0, (p.qCd || 0) - dt);
+  if (!ui.qBtn && document.body) {
+    const qb = document.createElement('div');
+    qb.className = 'qBtn';
+    qb.innerHTML = 'Q<small>衝擊波</small>';
+    qb.style.cssText = 'position:absolute;right:22px;bottom:130px;width:66px;height:66px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid rgba(157,255,220,.5);background:rgba(10,26,25,.62);color:#9dffdc;font:700 18px/1.1 system-ui;cursor:pointer;user-select:none;z-index:8';
+    qb.addEventListener('pointerdown', (e) => { e.preventDefault(); useQ(); });
+    document.body.appendChild(qb);
+    ui.qBtn = qb;
+  }
+  if (ui.qBtn) {
+    const ready = (p.qCd || 0) <= 0;
+    ui.qBtn.classList.toggle('cd', !ready);
+    ui.qBtn.firstChild.nodeValue = ready ? 'Q' : Math.ceil(p.qCd);
+  }
+
   /* --- 陷阱 --- */
   for (const tr of G.traps) {
     if (tr.cd > 0) tr.cd -= dt;
@@ -3845,6 +3863,18 @@ function updateHud() {
    14. 結束
    ============================================================ */
 /* 通關：擊敗最終核心 */
+
+function useQ() {
+  const p = G.player;
+  if (!p || G.mode !== 'play') return;
+  if ((p.qCd || 0) > 0) return;
+  p.qCd = 12;
+  p.invuln = Math.max(p.invuln || 0, 1.1);
+  explode(p.x, p.y, 210, 130 * (p.dmgMult || 1), '#9dffdd');
+  G.shake = Math.max(G.shake, 16);
+  G.nums.push({ x: p.x, y: p.y - 74, vx: 0, vy: -12, life: 1.6, text: '衝擊波！', color: '#9dffdc', size: 18 });
+  SFX.bigKill();
+}
 function victory() {
   G.slow = 0.9;
   G.shake = 30;
