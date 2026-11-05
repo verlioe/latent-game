@@ -3213,9 +3213,9 @@ function update(dt) {
 
   // 錨點超時：45 秒沒打破 → 強制破盾但首領回復 20%（避免永久卡死）
   if (G.enemies.some((e) => e.boss && e.shielded)) {
-    G.anchorT = (G.anchorT === undefined ? 45 : G.anchorT) - dt;
+    G.anchorT = (G.anchorT === undefined ? 20 : G.anchorT) - dt;
     if (G.anchorT <= 0) {
-      G.anchorT = 45;
+      G.anchorT = 20;
       const sb = G.enemies.find((e) => e.boss && e.shielded);
       if (sb) {
         sb.shielded = false; sb.phase = 2;
@@ -3226,7 +3226,7 @@ function update(dt) {
       G.shake = Math.max(G.shake, 12);
     }
   } else {
-    G.anchorT = 45;
+    G.anchorT = 20;
   }
 
   /* --- 陷阱 --- */
